@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Explorer</title>
+    <meta name="description" content="Browse, search, and tweet the latest Google Cloud BigQuery release notes in a sleek, modern dashboard.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Background Elements for Premium Look -->
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-area">
+                    <div class="bq-icon">
+                        <i class="fa-solid fa-database"></i>
+                        <span class="sparkle"><i class="fa-solid fa-sparkles"></i></span>
+                    </div>
+                    <div>
+                        <h1>BigQuery <span>Release Notes</span></h1>
+                        <p class="subtitle">Stay informed on the latest features, improvements, fixes, and deprecations</p>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <button id="refresh-btn" class="btn btn-primary" title="Refresh Release Notes">
+                        <i class="fa-solid fa-rotate-right" id="refresh-icon"></i>
+                        <span>Refresh Notes</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats and Quick Filter Bar -->
+        <section class="controls-section">
+            <!-- Search & Order Controls -->
+            <div class="search-sort-container">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Search release notes by keyword..." autocomplete="off">
+                    <button id="clear-search-btn" class="clear-btn" style="display: none;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                
+                <div class="sort-box">
+                    <span class="control-label">Sort by:</span>
+                    <div class="select-wrapper">
+                        <select id="sort-select">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-arrow"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Pills -->
+            <div class="categories-container">
+                <span class="control-label">Filter by type:</span>
+                <div class="category-pills" id="category-pills">
+                    <button class="pill active" data-category="All">
+                        <span class="pill-count" id="count-all">0</span> All Updates
+                    </button>
+                    <button class="pill" data-category="Feature">
+                        <span class="pill-dot dot-feature"></span>
+                        <span class="pill-count" id="count-feature">0</span> Features
+                    </button>
+                    <button class="pill" data-category="Fix">
+                        <span class="pill-dot dot-fix"></span>
+                        <span class="pill-count" id="count-fix">0</span> Fixes
+                    </button>
+                    <button class="pill" data-category="Issue">
+                        <span class="pill-dot dot-issue"></span>
+                        <span class="pill-count" id="count-issue">0</span> Issues
+                    </button>
+                    <button class="pill" data-category="Deprecation">
+                        <span class="pill-dot dot-deprecation"></span>
+                        <span class="pill-count" id="count-deprecation">0</span> Deprecations
+                    </button>
+                    <button class="pill" data-category="Change">
+                        <span class="pill-dot dot-change"></span>
+                        <span class="pill-count" id="count-change">0</span> Changes
+                    </button>
+                    <button class="pill" data-category="Other">
+                        <span class="pill-dot dot-other"></span>
+                        <span class="pill-count" id="count-other">0</span> Others
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content Grid -->
+        <main class="content-area">
+            <!-- Feedback Banner / Error message -->
+            <div id="error-message" class="alert-banner alert-error" style="display: none;">
+                <i class="fa-solid fa-circle-exclamation alert-icon"></i>
+                <div class="alert-content">
+                    <h4 class="alert-title">Connection Error</h4>
+                    <p class="alert-desc" id="error-text">Failed to fetch the latest release notes. Please check your internet connection and try again.</p>
+                </div>
+                <button id="error-retry-btn" class="btn btn-sm btn-outline">Retry</button>
+            </div>
+
+            <!-- Loading Skeleton -->
+            <div id="loading-skeletons" class="grid-layout">
+                <!-- Skeletons will be injected here by JS or visible initially -->
+                <div class="skeleton-card">
+                    <div class="skeleton-header">
+                        <div class="skeleton-badge"></div>
+                        <div class="skeleton-date"></div>
+                    </div>
+                    <div class="skeleton-line long"></div>
+                    <div class="skeleton-line medium"></div>
+                    <div class="skeleton-line short"></div>
+                    <div class="skeleton-footer">
+                        <div class="skeleton-btn"></div>
+                        <div class="skeleton-btn"></div>
+                    </div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-header">
+                        <div class="skeleton-badge"></div>
+                        <div class="skeleton-date"></div>
+                    </div>
+                    <div class="skeleton-line long"></div>
+                    <div class="skeleton-line medium"></div>
+                    <div class="skeleton-line short"></div>
+                    <div class="skeleton-footer">
+                        <div class="skeleton-btn"></div>
+                        <div class="skeleton-btn"></div>
+                    </div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-header">
+                        <div class="skeleton-badge"></div>
+                        <div class="skeleton-date"></div>
+                    </div>
+                    <div class="skeleton-line long"></div>
+                    <div class="skeleton-line medium"></div>
+                    <div class="skeleton-line short"></div>
+                    <div class="skeleton-footer">
+                        <div class="skeleton-btn"></div>
+                        <div class="skeleton-btn"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="empty-state-card" style="display: none;">
+                <div class="empty-state-icon">
+                    <i class="fa-solid fa-face-dashed"></i>
+                </div>
+                <h3>No Release Notes Found</h3>
+                <p>We couldn't find any updates matching your search or filters. Try adjusting your search query or selecting another filter pill.</p>
+                <button id="clear-filters-btn" class="btn btn-outline">Clear All Filters</button>
+            </div>
+
+            <!-- Feed Content -->
+            <div id="notes-grid" class="grid-layout" style="display: none;">
+                <!-- Dynamically populated release notes cards -->
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>&copy; 2026 BigQuery Release Notes Explorer. Built with Python Flask, Vanilla CSS & Vanilla JS.</p>
+            <p class="feed-source">Data source: <a href="https://docs.cloud.google.com/feeds/bigquery-release-notes.xml" target="_blank" rel="noopener noreferrer">GCP Atom Feed <i class="fa-solid fa-arrow-up-right-from-square"></i></a></p>
+        </footer>
+    </div>
+
+    <!-- Tweet Modal Composer -->
+    <div id="tweet-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-brands fa-x-twitter"></i> Share Update on X / Twitter</h3>
+                <button id="modal-close-btn" class="modal-close-icon"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Tweet Preview Panel -->
+                <div class="tweet-composer-box">
+                    <div class="tweet-user-meta">
+                        <div class="user-avatar">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name">Release Explorer</span>
+                            <span class="user-handle">@bq_notes</span>
+                        </div>
+                    </div>
+                    
+                    <textarea id="tweet-textarea" placeholder="What's happening?" rows="5" maxlength="400"></textarea>
+                    
+                    <div class="tweet-meta-info">
+                        <span id="char-counter" class="char-count">0 / 280</span>
+                    </div>
+                </div>
+
+                <!-- Original Release Summary Context -->
+                <div class="original-note-preview">
+                    <span class="preview-label">Original Note Reference:</span>
+                    <div class="preview-card">
+                        <div class="preview-card-header">
+                            <span id="preview-badge" class="badge">Feature</span>
+                            <span id="preview-date" class="date-text">June 15, 2026</span>
+                        </div>
+                        <p id="preview-desc">Original content goes here...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="modal-cancel-btn" class="btn btn-outline">Cancel</button>
+                <button id="tweet-submit-btn" class="btn btn-twitter">
+                    <i class="fa-brands fa-x-twitter"></i> Post Tweet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
